@@ -8,6 +8,9 @@ import MapWrapper from '../../components/MapWrapper/MapWrapper';
 import SideMenu from '../../components/SideMenu/SideMenu';
 // import { updateCurrentLayers, getMapData, storeMapData, getAllPoints, storeStateData } from '../../utils/filtering';
 import { storeStateData, storeCountyData } from '../../utils/filtering';
+import { counties } from '../../res/counties/statecounties.js';
+import { states } from '../../res/states.js';
+import { GeoJSON } from 'react-leaflet';
 import './HomePage.css';
 
 const styles = () => ({
@@ -17,6 +20,94 @@ const styles = () => ({
     left: '50%',
   },
 });
+
+// TODO: Move to utilities file
+const colorBins = [0, 50, 75, 100, 120];
+var lockedLayer = null;
+var lockedLayerColor = null;
+function eachState(feature, layer, statetotals, total, setStateDisplay) {
+  if(statetotals[feature.properties.NAME] && statetotals[feature.properties.NAME].sum_harassment > 0) {
+    // const colorHashed = colorBins[Math.floor((5*statetotals[feature.properties.NAME].sum_harassment-1)/total)];
+    let colorHashed = 0;
+    if(statetotals[feature.properties.NAME].sum_harassment < total/10) colorHashed = colorBins[0];
+    else if(statetotals[feature.properties.NAME].sum_harassment < total/8) colorHashed = colorBins[1];
+    else if(statetotals[feature.properties.NAME].sum_harassment < total/6) colorHashed = colorBins[2];
+    else if(statetotals[feature.properties.NAME].sum_harassment < total/4) colorHashed = colorBins[3];
+    else if(statetotals[feature.properties.NAME].sum_harassment < total + 1) colorHashed = colorBins[4];
+    layer.on('mouseover', function(event){
+      if(!setStateDisplay(feature.properties.NAME)) return;  // setStateDisplay() will return false if we're locked onto something else
+      // layer._path.classList.add("show-state");
+      layer.setStyle({fillColor: 'rgb(200, 200, 200)'});
+    });
+    layer.on('mouseout', function(event){
+      if(!setStateDisplay("none")) return;
+      // layer._path.classList.remove("show-state");
+      layer.setStyle({fillColor: `rgb(255, ${150-colorHashed}, ${150-colorHashed})`});
+    });
+    layer.on('click', function(event) {
+      layer.setStyle({fillColor: `rgb(100, 100, 100)`});
+      if(lockedLayer) {
+        lockedLayer.setStyle({fillColor: `rgb(255, ${lockedLayerColor}, ${lockedLayerColor})`});
+        if(lockedLayer === layer) {
+          setStateDisplay("none", true);
+          lockedLayer = null;
+          lockedLayerColor = null;
+          return;
+        }
+      }
+      setStateDisplay(feature.properties.NAME, true);  // true parameter for locking
+
+      lockedLayerColor = 150-colorHashed;
+      lockedLayer = layer;
+    });
+    layer.setStyle({stroke: 1, weight: 1, opacity: 0.75, color: 'white', fillColor: `rgb(255, ${150-colorHashed}, ${150-colorHashed})`, fillOpacity: 0.75});
+  } else {
+    layer.setStyle({color: 'rgba(0, 0, 0, 0)'});
+  }
+}
+
+function eachStatesCounties(feature, layer, countytotals, setCountyDisplay, total=33)
+{
+  if(countytotals[feature.properties.County_state] && countytotals[feature.properties.County_state].sum_harassment > 0) {
+    // const colorHashed = colorBins[Math.floor((5*countytotals[feature.properties.County_state].sum_harassment-1)/total)];
+    let colorHashed = 0;
+    // if(countytotals[feature.properties.County_state].sum_harassment < total/10) colorHashed = colorBins[0];
+    // else if(countytotals[feature.properties.County_state].sum_harassment < total/8) colorHashed = colorBins[1];
+    // else if(countytotals[feature.properties.County_state].sum_harassment < total/6) colorHashed = colorBins[2];
+    // else if(countytotals[feature.properties.County_state].sum_harassment < total/4) colorHashed = colorBins[3];
+    // else if(countytotals[feature.properties.County_state].sum_harassment < total + 1) colorHashed = colorBins[4];
+    colorHashed = colorBins[0];
+    layer.on('mouseover', function(event){
+      if(!setCountyDisplay(feature.properties.County_state)) return;  // setCountyDisplay() will return false if we're locked onto something else
+      // layer._path.classList.add("show-state");
+      layer.setStyle({fillColor: 'rgb(200, 200, 200)'});
+    });
+    layer.on('mouseout', function(event){
+      if(!setCountyDisplay("none")) return;
+      // layer._path.classList.remove("show-state");
+      layer.setStyle({fillColor: `rgb(255, ${150-colorHashed}, ${150-colorHashed})`});
+    });
+    layer.on('click', function(event) {
+      layer.setStyle({fillColor: `rgb(100, 100, 100)`});
+      if(lockedLayer) {
+        lockedLayer.setStyle({fillColor: `rgb(255, ${lockedLayerColor}, ${lockedLayerColor})`});
+        if(lockedLayer === layer) {
+          setCountyDisplay("none", true);
+          lockedLayer = null;
+          lockedLayerColor = null;
+          return;
+        }
+      }
+      setCountyDisplay(feature.properties.County_state, true);  // true parameter for locking
+
+      lockedLayerColor = 150-colorHashed;
+      lockedLayer = layer;
+    });
+    layer.setStyle({stroke: 1, weight: 1, opacity: 0.75, color: 'white', fillColor: `rgb(255, ${150-colorHashed}, ${150-colorHashed})`, fillOpacity: 0.75});
+  } else {
+    layer.setStyle({color: 'rgba(0, 0, 0, 0)'});
+  }
+}
 
 class HomePage extends Component {
   state = {
@@ -30,16 +121,7 @@ class HomePage extends Component {
     locked: false
   };
 
-  componentDidMount() {
-    // const allpoints = getAllPoints();
-    // if (allpoints.length !== 0) {
-    //   this.setState({
-    //     isFetching: false,
-    //     mapdata: allpoints,
-    //   });
-    //   return;
-    // }
-
+  getStateData() {
     axios.get('/api/maps/statedata')
       .then(({data: {data}}) => {
         this.setState({
@@ -51,7 +133,9 @@ class HomePage extends Component {
         this.setState({ isFetching: false });
         alert(`API call failed: ${err}`);
       });
+  }
 
+  getCountyData() {  // TODO: Lazy load?
     axios.get('/api/maps/countydata')
       .then(({data: {data}}) => {
         this.setState({
@@ -63,21 +147,10 @@ class HomePage extends Component {
       });
   }
 
-  // updateMapData = ({ target: { name, value } }) => {
-  //   const { currentLayers } = this.state;
-  //   const newLayers = name === 'reports'
-  //     ? updateCurrentLayers(value, currentLayers, true)
-  //     : updateCurrentLayers(name, currentLayers);
-
-  //   axios.get('/api/totals/' + name)
-  //     .then(({ data: {statetotals} {} => {
-  //       this.setState({
-  //       mapdata: getMapData(name, newLayers),
-  //       statetotals: statetotals.result,
-  //       currentLayers: newLayers,
-  //     });
-  //   });
-  // }
+  componentDidMount() {
+    this.getStateData();
+    this.getCountyData();
+  }
 
   resetMapData = () => {
     this.setState({
@@ -134,7 +207,10 @@ class HomePage extends Component {
         ) : (
           <React.Fragment>
         {/* TODO: context for mapdata and statetotals? */}
-            <MapWrapper statetotals={statetotals} countytotals={this.state.countytotals} updateState={this.updateState} updateCounty={this.updateCounty} zoom={this.getZoom} updateZoom={this.updateZoom} />
+            <MapWrapper zoom={this.getZoom} updateZoom={this.updateZoom} >
+              { this.state.zoom >= 6 && counties.map((state, index) => <GeoJSON key={index} data={state} onEachFeature={(feature, layer) => eachStatesCounties(feature, layer, this.state.countytotals, this.updateCounty)} /> ) }     
+              <GeoJSON data={states} onEachFeature={(feature, layer) => eachState(feature, layer, statetotals, 100, this.updateState)} />
+            </MapWrapper>
             <SideMenu
               statetotals={statetotals} countytotals={this.state.countytotals} currentState={displayState} currentCounty={this.state.displayCounty} currentLayers={currentLayers} />
           </React.Fragment>
