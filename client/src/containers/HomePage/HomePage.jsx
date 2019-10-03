@@ -6,11 +6,15 @@ import { CircularProgress } from '@material-ui/core';
 
 import MapWrapper from '../../components/MapWrapper/MapWrapper';
 import SideMenu from '../../components/SideMenu/SideMenu';
+import Charts from '../../components/Charts/Charts';
 // import { updateCurrentLayers, getMapData, storeMapData, getAllPoints, storeStateData } from '../../utils/filtering';
 import { storeStateData, storeCountyData } from '../../utils/filtering';
 import { counties } from '../../res/counties/statecounties.js';
 import { states } from '../../res/states.js';
 import { GeoJSON } from 'react-leaflet';
+import { Bar } from 'react-chartjs-2';
+import { labels, getRaceChartData, wholeYAxis } from '../../utils/chart-utils';
+
 import './HomePage.css';
 
 const styles = () => ({
@@ -113,8 +117,8 @@ class HomePage extends Component {
   state = {
     zoom: 4,
     isFetching: true,
+    totals: {},  // contains states, counties
     statetotals: {},
-    currentLayers: new Set(['all']),
     countytotals: {},
     displayState: 'none',
     displayCounty: 'none',
@@ -153,10 +157,6 @@ class HomePage extends Component {
   }
 
   resetMapData = () => {
-    this.setState({
-      // mapdata: getAllPoints(),
-      currentLayers: new Set(['all']),
-     });
   }
 
   // Return value, success (in our terms, not react's)
@@ -197,24 +197,29 @@ class HomePage extends Component {
 
 
   render() {
-    const { isFetching, statetotals, displayState, currentLayers } = this.state;
+    const { isFetching, statetotals, displayState } = this.state;
     const { classes } = this.props;
+
+    if(isFetching) {
+      return <CircularProgress className={classes.progress} />;
+    }
 
     return (
       <div className="homePage">
-        {isFetching ? (
-          <CircularProgress className={classes.progress} />
-        ) : (
-          <React.Fragment>
-        {/* TODO: context for mapdata and statetotals? */}
-            <MapWrapper zoom={this.getZoom} updateZoom={this.updateZoom} >
-              { this.state.zoom >= 6 && counties.map((state, index) => <GeoJSON key={index} data={state} onEachFeature={(feature, layer) => eachStatesCounties(feature, layer, this.state.countytotals, this.updateCounty)} /> ) }     
-              <GeoJSON data={states} onEachFeature={(feature, layer) => eachState(feature, layer, statetotals, 100, this.updateState)} />
-            </MapWrapper>
-            <SideMenu
-              statetotals={statetotals} countytotals={this.state.countytotals} currentState={displayState} currentCounty={this.state.displayCounty} currentLayers={currentLayers} />
-          </React.Fragment>
-        )}
+        <React.Fragment>
+          {/* TODO: context for mapdata and statetotals? */}
+          <MapWrapper zoom={this.getZoom} updateZoom={this.updateZoom} >
+            { this.state.zoom >= 6 && counties.map((state, index) => <GeoJSON key={index} data={state} onEachFeature={(feature, layer) => eachStatesCounties(feature, layer, this.state.countytotals, this.updateCounty)} /> ) }     
+            <GeoJSON data={states} onEachFeature={(feature, layer) => eachState(feature, layer, statetotals, 100, this.updateState)} />
+          </MapWrapper>
+
+          <SideMenu header={this.state.displayState}>
+            {/* Charts */}
+            <div className="sideMenu__chart">
+              <Charts data={statetotals[displayState]} />
+            </div>
+          </SideMenu>
+        </React.Fragment>
       </div>
     );
   }
