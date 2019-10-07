@@ -11,7 +11,7 @@ import Charts from '../../components/Charts/Charts';
 import { storeStateData, storeCountyData } from '../../utils/filtering';
 import { counties } from '../../res/counties/statecounties.js';
 import { states } from '../../res/states.js';
-import { GeoJSON } from 'react-leaflet';
+import { Rectangle, GeoJSON } from 'react-leaflet';
 import { Bar } from 'react-chartjs-2';
 import { labels, getRaceChartData, wholeYAxis } from '../../utils/chart-utils';
 
@@ -208,7 +208,8 @@ class HomePage extends Component {
       <div className="homePage">
         <React.Fragment>
           {/* TODO: context for mapdata and statetotals? */}
-          <MapWrapper zoom={this.getZoom} updateZoom={this.updateZoom} >
+          <MapWrapper zoom={this.getZoom} updateZoom={this.updateZoom}>
+            <Rectangle bounds={[[-90., -180.], [90., 180.]]} fillOpacity="0" onClick={() => this.updateState("none", true)} />
             { this.state.zoom >= 6 && counties.map((state, index) => <GeoJSON key={index} data={state} onEachFeature={(feature, layer) => eachStatesCounties(feature, layer, this.state.countytotals, this.updateCounty)} /> ) }     
             <GeoJSON data={states} onEachFeature={(feature, layer) => eachState(feature, layer, statetotals, 100, this.updateState)} />
           </MapWrapper>
