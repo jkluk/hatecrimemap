@@ -83,7 +83,6 @@ export function getChartData(chart, allData) {
   }
 
   chartData.datasets[0].data = data;
-  console.log(chartData);
   return chartData;
 }
 

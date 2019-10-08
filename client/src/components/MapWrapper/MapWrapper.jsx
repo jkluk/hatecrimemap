@@ -5,6 +5,7 @@ import { Map, TileLayer, CircleMarker, Popup, GeoJSON } from 'react-leaflet';
 import { getSourceLI } from '../../utils/utilities';
 import './MapWrapper.css';
 
+
 function updateLevel(e, currZoom) {
   console.log(currZoom, e);
   currZoom = e.target._zoom;

@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import axios from 'axios';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { CircularProgress } from '@material-ui/core';
@@ -8,12 +7,12 @@ import MapWrapper from '../../components/MapWrapper/MapWrapper';
 import SideMenu from '../../components/SideMenu/SideMenu';
 import Charts from '../../components/Charts/Charts';
 // import { updateCurrentLayers, getMapData, storeMapData, getAllPoints, storeStateData } from '../../utils/filtering';
-import { storeStateData, storeCountyData } from '../../utils/filtering';
 import { counties } from '../../res/counties/statecounties.js';
 import { states } from '../../res/states.js';
 import { Rectangle, GeoJSON } from 'react-leaflet';
 import { Bar } from 'react-chartjs-2';
 import { labels, getRaceChartData, wholeYAxis } from '../../utils/chart-utils';
+import { getAllData, eachState, eachStatesCounties, storeStateData, storeCountyData, resetStateColor } from '../../utils/data-utils';
 
 import './HomePage.css';
 
@@ -25,147 +24,49 @@ const styles = () => ({
   },
 });
 
-// TODO: Move to utilities file
-const colorBins = [0, 50, 75, 100, 120];
-var lockedLayer = null;
-var lockedLayerColor = null;
-function eachState(feature, layer, statetotals, total, setStateDisplay) {
-  if(statetotals[feature.properties.NAME] && statetotals[feature.properties.NAME].sum_harassment > 0) {
-    // const colorHashed = colorBins[Math.floor((5*statetotals[feature.properties.NAME].sum_harassment-1)/total)];
-    let colorHashed = 0;
-    if(statetotals[feature.properties.NAME].sum_harassment < total/10) colorHashed = colorBins[0];
-    else if(statetotals[feature.properties.NAME].sum_harassment < total/8) colorHashed = colorBins[1];
-    else if(statetotals[feature.properties.NAME].sum_harassment < total/6) colorHashed = colorBins[2];
-    else if(statetotals[feature.properties.NAME].sum_harassment < total/4) colorHashed = colorBins[3];
-    else if(statetotals[feature.properties.NAME].sum_harassment < total + 1) colorHashed = colorBins[4];
-    layer.on('mouseover', function(event){
-      if(!setStateDisplay(feature.properties.NAME)) return;  // setStateDisplay() will return false if we're locked onto something else
-      // layer._path.classList.add("show-state");
-      layer.setStyle({fillColor: 'rgb(200, 200, 200)'});
-    });
-    layer.on('mouseout', function(event){
-      if(!setStateDisplay("none")) return;
-      // layer._path.classList.remove("show-state");
-      layer.setStyle({fillColor: `rgb(255, ${150-colorHashed}, ${150-colorHashed})`});
-    });
-    layer.on('click', function(event) {
-      layer.setStyle({fillColor: `rgb(100, 100, 100)`});
-      if(lockedLayer) {
-        lockedLayer.setStyle({fillColor: `rgb(255, ${lockedLayerColor}, ${lockedLayerColor})`});
-        if(lockedLayer === layer) {
-          setStateDisplay("none", true);
-          lockedLayer = null;
-          lockedLayerColor = null;
-          return;
-        }
-      }
-      setStateDisplay(feature.properties.NAME, true);  // true parameter for locking
-
-      lockedLayerColor = 150-colorHashed;
-      lockedLayer = layer;
-    });
-    layer.setStyle({stroke: 1, weight: 1, opacity: 0.75, color: 'white', fillColor: `rgb(255, ${150-colorHashed}, ${150-colorHashed})`, fillOpacity: 0.75});
-  } else {
-    layer.setStyle({color: 'rgba(0, 0, 0, 0)'});
-  }
-}
-
-function eachStatesCounties(feature, layer, countytotals, setCountyDisplay, total=33)
-{
-  if(countytotals[feature.properties.County_state] && countytotals[feature.properties.County_state].sum_harassment > 0) {
-    // const colorHashed = colorBins[Math.floor((5*countytotals[feature.properties.County_state].sum_harassment-1)/total)];
-    let colorHashed = 0;
-    // if(countytotals[feature.properties.County_state].sum_harassment < total/10) colorHashed = colorBins[0];
-    // else if(countytotals[feature.properties.County_state].sum_harassment < total/8) colorHashed = colorBins[1];
-    // else if(countytotals[feature.properties.County_state].sum_harassment < total/6) colorHashed = colorBins[2];
-    // else if(countytotals[feature.properties.County_state].sum_harassment < total/4) colorHashed = colorBins[3];
-    // else if(countytotals[feature.properties.County_state].sum_harassment < total + 1) colorHashed = colorBins[4];
-    colorHashed = colorBins[0];
-    layer.on('mouseover', function(event){
-      if(!setCountyDisplay(feature.properties.County_state)) return;  // setCountyDisplay() will return false if we're locked onto something else
-      // layer._path.classList.add("show-state");
-      layer.setStyle({fillColor: 'rgb(200, 200, 200)'});
-    });
-    layer.on('mouseout', function(event){
-      if(!setCountyDisplay("none")) return;
-      // layer._path.classList.remove("show-state");
-      layer.setStyle({fillColor: `rgb(255, ${150-colorHashed}, ${150-colorHashed})`});
-    });
-    layer.on('click', function(event) {
-      layer.setStyle({fillColor: `rgb(100, 100, 100)`});
-      if(lockedLayer) {
-        lockedLayer.setStyle({fillColor: `rgb(255, ${lockedLayerColor}, ${lockedLayerColor})`});
-        if(lockedLayer === layer) {
-          setCountyDisplay("none", true);
-          lockedLayer = null;
-          lockedLayerColor = null;
-          return;
-        }
-      }
-      setCountyDisplay(feature.properties.County_state, true);  // true parameter for locking
-
-      lockedLayerColor = 150-colorHashed;
-      lockedLayer = layer;
-    });
-    layer.setStyle({stroke: 1, weight: 1, opacity: 0.75, color: 'white', fillColor: `rgb(255, ${150-colorHashed}, ${150-colorHashed})`, fillOpacity: 0.75});
-  } else {
-    layer.setStyle({color: 'rgba(0, 0, 0, 0)'});
-  }
-}
-
 class HomePage extends Component {
-  state = {
-    zoom: 4,
-    isFetching: true,
-    totals: {},  // contains states, counties
-    statetotals: {},
-    countytotals: {},
-    displayState: 'none',
-    displayCounty: 'none',
-    locked: false
-  };
-
-  getStateData() {
-    axios.get('/api/maps/statedata')
-      .then(({data: {data}}) => {
-        this.setState({
-          isFetching: false,
-          statetotals: storeStateData(data)  // Converts array to objects with state names as keys
-        });
-      })
-      .catch((err) => {
-        this.setState({ isFetching: false });
-        alert(`API call failed: ${err}`);
-      });
+  constructor(props) {
+    super(props);
+    this.state = {
+      zoom: 4,
+      isFetching: true,
+      data: {},  // { states, counties }
+      currentDisplay: {},  // { displayName, chartData }
+      displayState: 'none',
+      displayCounty: 'none',
+      locked: false
+    };
+    this.statesRef = React.createRef();
   }
 
-  getCountyData() {  // TODO: Lazy load?
-    axios.get('/api/maps/countydata')
-      .then(({data: {data}}) => {
-        this.setState({
-          countytotals: storeCountyData(data)
-        });
-      })
-      .catch((err) => {
-        alert(`API call failed: ${err}`);
+  async componentDidMount() {
+    getAllData().then(values => {
+      this.setState({
+        data: { states: storeStateData(values[0].data), counties: storeCountyData(values[1].data) },
+        isFetching: false
       });
-  }
-
-  componentDidMount() {
-    this.getStateData();
-    this.getCountyData();
+      
+    });
   }
 
   resetMapData = () => {
   }
 
+  resetStateColors() {
+    Object.values(this.statesRef.current.contextValue.layerContainer._layers).forEach(layer => {
+      if(layer.feature) {  // only the states/counties have a feature
+        resetStateColor(layer, this.state.data.states);
+      }
+    })
+  }
+
   // Return value, success (in our terms, not react's)
   updateState = (state, lock = false) => {
-    if(lock) {
-      this.setState({displayState: state, locked: state!=="none"});  // we never want to lock onto None
-      return true;
-    } else if(!this.state.locked) {
-      this.setState({displayState: state});
+    if(lock || !this.state.locked) {  // lock parameter overrides current lock
+      if(this.state.locked && state == "none") this.resetStateColors();  // would like color-setting to be more declarative
+      // but onEachFeature only executes to initialize, so color handling is all done within events (mouseon, mouseout, click)
+
+      this.setState({displayState: state, locked: lock && state!=="none"});  // we never want to lock onto None
       return true;
     }
     return false;
@@ -188,16 +89,15 @@ class HomePage extends Component {
   }
 
   updateZoom = (zoom = 4) => {
-    if((this.state.zoom > 6 && zoom < 6) || (this.state.zoom < 6 && zoom > 6))  // threshold for switching between county and state, unlock display
-      this.setState({zoom: zoom, lock: false}, () => this.state.zoom);
-    else
-      this.setState({zoom: zoom}, () => this.state.zoom);
+    // if((this.state.zoom > 6 && zoom < 6) || (this.state.zoom < 6 && zoom > 6))  // threshold for switching between county and state, unlock display
+    //   this.setState({zoom: zoom, lock: false}, () => this.state.zoom);
+    // else
+    //   this.setState({zoom: zoom}, () => this.state.zoom);
+    // console.log(this.statesRef);
   }
 
-
-
   render() {
-    const { isFetching, statetotals, displayState } = this.state;
+    const { isFetching, data, displayState } = this.state;
     const { classes } = this.props;
 
     if(isFetching) {
@@ -207,17 +107,17 @@ class HomePage extends Component {
     return (
       <div className="homePage">
         <React.Fragment>
-          {/* TODO: context for mapdata and statetotals? */}
+          {/* TODO: context for mapdata and data.states? */}
           <MapWrapper zoom={this.getZoom} updateZoom={this.updateZoom}>
             <Rectangle bounds={[[-90., -180.], [90., 180.]]} fillOpacity="0" onClick={() => this.updateState("none", true)} />
-            { this.state.zoom >= 6 && counties.map((state, index) => <GeoJSON key={index} data={state} onEachFeature={(feature, layer) => eachStatesCounties(feature, layer, this.state.countytotals, this.updateCounty)} /> ) }     
-            <GeoJSON data={states} onEachFeature={(feature, layer) => eachState(feature, layer, statetotals, 100, this.updateState)} />
+            { this.state.zoom >= 6 && counties.map((state, index) => <GeoJSON key={index} data={state} onEachFeature={(feature, layer) => eachStatesCounties(feature, layer, data.counties, this.updateCounty)} /> ) }     
+            <GeoJSON ref={this.statesRef} data={states} onEachFeature={(feature, layer) => eachState(feature, layer, data.states, 100, this.updateState)} />
           </MapWrapper>
 
           <SideMenu header={this.state.displayState}>
             {/* Charts */}
             <div className="sideMenu__chart">
-              <Charts data={statetotals[displayState]} />
+              <Charts data={data.states[displayState]} />
             </div>
           </SideMenu>
         </React.Fragment>
