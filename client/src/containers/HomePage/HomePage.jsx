@@ -31,9 +31,7 @@ class HomePage extends Component {
       zoom: 4,
       isFetching: true,
       data: {},  // { states, counties }
-      currentDisplay: {},  // { displayName, chartData }
-      displayState: 'none',
-      displayCounty: 'none',
+      currentDisplay: '',
       locked: false
     };
     this.statesRef = React.createRef();
@@ -66,7 +64,7 @@ class HomePage extends Component {
       if(this.state.locked && state == "none") this.resetStateColors();  // would like color-setting to be more declarative
       // but onEachFeature only executes to initialize, so color handling is all done within events (mouseon, mouseout, click)
 
-      this.setState({displayState: state, locked: lock && state!=="none"});  // we never want to lock onto None
+      this.setState({currentDisplay: state, locked: lock && state!=="none"});  // we never want to lock onto None
       return true;
     }
     return false;
@@ -75,10 +73,10 @@ class HomePage extends Component {
   updateCounty = (county, lock = false) => {
     console.log(county);
     if(lock) {
-      this.setState({displayCounty: county, locked: county!=="none"});
+      this.setState({currentDisplay: county, locked: county!=="none"});
       return true;
     } else if(!this.state.locked) {
-      this.setState({displayCounty: county});
+      this.setState({currentDisplay: county});
       return true;
     }
     return false;
@@ -97,7 +95,7 @@ class HomePage extends Component {
   }
 
   render() {
-    const { isFetching, data, displayState } = this.state;
+    const { isFetching, data, currentDisplay } = this.state;
     const { classes } = this.props;
 
     if(isFetching) {
@@ -114,10 +112,10 @@ class HomePage extends Component {
             <GeoJSON ref={this.statesRef} data={states} onEachFeature={(feature, layer) => eachState(feature, layer, data.states, 100, this.updateState)} />
           </MapWrapper>
 
-          <SideMenu header={this.state.displayState}>
+          <SideMenu header={this.state.currentDisplay}>
             {/* Charts */}
             <div className="sideMenu__chart">
-              <Charts data={data.states[displayState]} />
+              <Charts data={data.states[currentDisplay]} />
             </div>
           </SideMenu>
         </React.Fragment>

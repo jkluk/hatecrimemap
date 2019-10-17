@@ -68,16 +68,16 @@ var otherChartData = {
 export function getChartData(chart, allData) {
   var chartData;
   var data;
-  if (chart == CHARTS.RACE_ETHNICITY) {
+  if (chart === CHARTS.RACE_ETHNICITY) {
     chartData = raceChartData;
     data = getRaceData(allData);
-  } else if (chart == CHARTS.RELIGION) {
+  } else if (chart === CHARTS.RELIGION) {
     chartData = religionChartData;
     data = getReligionData(allData);
-  } else if (chart == CHARTS.GENDER_SEXUALITY) {
+  } else if (chart === CHARTS.GENDER_SEXUALITY) {
     chartData = genderChartData;
     data = getGenderData(allData);
-  } else if (chart == CHARTS.OTHER) {
+  } else if (chart === CHARTS.OTHER) {
     chartData = otherChartData;
     data = getOtherData(allData);
   }

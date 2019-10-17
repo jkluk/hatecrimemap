@@ -8,74 +8,35 @@ const {
 
 const router = express.Router();
 
-const columns = 'name, sum_harassment, jewish_harassed_total';
-const updateState = `
-update us_states set sum_harassment = (select count(*) from hcmdata as thedatatable where ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-jewish_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%jewish%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-african_american_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%african american%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-arab_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%arab%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-asian_american_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%jewish%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-disabled_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%disabled%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-latinx_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%latinx%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-lgbt_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%lgbt%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-muslim_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%muslim%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-native_american_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%native american%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-pacific_islander_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%pacific islander%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-sikh_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%sikh%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-women_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%women%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-men_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%men%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-girls_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%girls%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-boys_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%boys%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-white_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%white%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-immigrants_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%immigrants%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-trump_supporter_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%trump supporter%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-others_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%others%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326)))
-`;
+const totals_columns = ["sum_harassment", "jewish_harassed_total", "african_american_harassed_total", "arab_harassed_total",
+						"asian_american_harassed_total", "disabled_harassed_total", "latinx_harassed_total",
+						"lgbt_harassed_total", "muslim_harassed_total", "native_american_harassed_total",
+						"pacific_islander_harassed_total", "sikh_harassed_total", "women_harassed_total", "men_harassed_total", 
+						"girls_harassed_total", "boys_harassed_total", "white_harassed_total", "immigrants_harassed_total",
+						"trump_supporter_harassed_total", "others_harassed_total"];
+const totals_match_pattern = ['%', '%jewish%', '%african american%', '%arab%', '%asian american%', '%disabled%', '%latinx%', '%lgbt%',
+								'%muslim%', '%native american%', '%pacific islander%', '%sikh%', '%women%', '%men%', '%girls%',
+								'%boys%', '%white%', '%immigrants%', '%trump supporter%', '%others%'];
+const state_table_name = 'us_states';
+const county_table_name = 'us_counties';
+const state_totals_table_name = 'totals';
+const county_totals_table_name = 'county_totals';
+const data_table_name = 'hcmdata';
 
-const updateStatePro =`
-update us_states set sum_harassment = (select count(*) from hcmdata as thedatatable where ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-jewish_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%jewish%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-african_american_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%african american%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-arab_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%arab%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-asian_american_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%jewish%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-disabled_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%disabled%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-latinx_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%latinx%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-lgbt_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%lgbt%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-muslim_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%muslim%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-native_american_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%native american%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-pacific_islander_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%pacific islander%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-sikh_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%sikh%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-women_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%women%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-men_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%men%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-girls_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%girls%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-boys_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%boys%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-white_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%white%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-immigrants_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%immigrants%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-others_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%others%' and ST_Intersects(us_states.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326)))
-`;
+const updateState = `update ${state_totals_table_name} set
+					${totals_columns.map( (column_name, i) => {
+						return (column_name + "= (SELECT count(*) FROM " + data_table_name + " as data_table where groupsharassed ilike '" + totals_match_pattern[i]
+											+ "' and ST_Intersects(" + state_table_name + ".geom, ST_SetSRID(ST_MakePoint(data_table.lon, data_table.lat), 4326))),")
+					})}`;
 
-const updateCounty = `
-update us_counties set sum_harassment = (select count(*) from hcmdata where ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-jewish_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%jewish%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-african_american_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%african american%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-arab_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%arab%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-asian_american_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%jewish%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-disabled_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%disabled%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-latinx_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%latinx%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-lgbt_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%lgbt%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-muslim_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%muslim%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-native_american_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%native american%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-pacific_islander_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%pacific islander%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-sikh_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%sikh%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-women_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%women%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-men_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%men%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-girls_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%girls%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-boys_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%boys%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-white_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%white%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-immigrants_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%immigrants%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-trump_supporter_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%trump supporter%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326))),
-others_harassed_total = (select count(*) from hcmdata where groupsharassed ilike '%others%' and ST_Intersects(us_counties.geom, ST_SetSRID(ST_MakePoint(hcmdata.lon, hcmdata.lat), 4326)))
-`
+const updateCounty = `update ${county_totals_table_name} set
+					${totals_columns.map( (column_name, i) => {
+						return (column_name + "= (SELECT count(*) FROM " + data_table_name + " as data_table where groupsharassed ilike '" + totals_match_pattern[i]
+											+ "' and ST_Intersects(" + county_table_name + ".geom, ST_SetSRID(ST_MakePoint(data_table.lon, data_table.lat), 4326))),")
+					})}`;
+					
+const columns = ["jewish", "african_american", "arab", "asian_american", "disabled", "latinx", "lgbt", "muslim", "native_american",
+					"pacific_islander", "sikh", "women", "men", "girls", "boys", "white", "immigrants", "trump_supporter", "others"]
 
 router.use((req, res, next) => {
 	/* queries to /totals api go through here first */

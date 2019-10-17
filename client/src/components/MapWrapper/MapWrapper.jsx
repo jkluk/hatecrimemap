@@ -1,15 +1,7 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { Map, TileLayer, CircleMarker, Popup, GeoJSON } from 'react-leaflet';
+import { Map, TileLayer } from 'react-leaflet';
 
-import { getSourceLI } from '../../utils/utilities';
 import './MapWrapper.css';
-
-
-function updateLevel(e, currZoom) {
-  console.log(currZoom, e);
-  currZoom = e.target._zoom;
-}
 
 const MapWrapper = (props) => {
   const mapCenter = [38, -95];

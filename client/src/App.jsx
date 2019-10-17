@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import { MuiPickersUtilsProvider } from 'material-ui-pickers';
 import MomentUtils from 'material-ui-pickers/utils/moment-utils';
 
@@ -14,9 +14,11 @@ const App = () => (
     <Router>
       <div className="app">
         <Header />
-        <Route path="/" component={HomePage} />
-        <Route exact path="/reportincident" component={ReportIncidentPage} />
-        <Route exact path="/verifyincidents" component={VerifyIncidentsPage} />
+        <Switch>
+          <Route exact path="/reportincident" component={ReportIncidentPage} />
+          <Route exact path="/verifyincidents" component={VerifyIncidentsPage} />
+          <Route path="/" component={HomePage} />
+        </Switch>
       </div>
     </Router>
   </MuiPickersUtilsProvider>
