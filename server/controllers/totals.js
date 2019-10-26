@@ -49,21 +49,21 @@ const data_table_name = 'hcmdata';
 
 // TODO, camel+lowercase all columns
 const updateState = `update ${state_totals_table_name} set
-					state_total = (SELECT count(*) FROM ${data_table_name} as data_table where ST_Intersects(${state_table_name}.geom, ST_SetSRID(ST_MakePoint(data_table.\"Lon\", data_table.\"Lat\"), 4326))),
+					state_total = (SELECT count(*) FROM ${data_table_name} as data_table where ST_Intersects(${state_table_name}.geom, ST_SetSRID(ST_MakePoint(data_table.lon, data_table.lat), 4326))),
 					${columns.map( (column_name, i) => {
-						return (column_name + "= (SELECT count(*) FROM " + data_table_name + " as data_table where data_table.\"Groupsharassed\" ilike '" + totals_match_pattern[i]
-											+ "' and ST_Intersects(" + state_table_name + ".geom, ST_SetSRID(ST_MakePoint(data_table.\"Lon\", data_table.\"Lat\"), 4326)))")
+						return (column_name + "= (SELECT count(*) FROM " + data_table_name + " as data_table where data_table.groupsharassed ilike '" + totals_match_pattern[i]
+											+ "' and ST_Intersects(" + state_table_name + ".geom, ST_SetSRID(ST_MakePoint(data_table.lon, data_table.lat), 4326)))")
 					}).join()};
 `;
 
 const updateCounty = `update ${county_totals_table_name} set
 					${totals_columns.map( (column_name, i) => {
-						return (column_name + "= (SELECT count(*) FROM " + data_table_name + " as data_table where data_table.\"Groupsharassed\" ilike '" + totals_match_pattern[i]
-											+ "' and ST_Intersects(" + county_table_name + ".geom, ST_SetSRID(ST_MakePoint(data_table.\"Lon\", data_table.\"Lat\"), 4326))),")
+						return (column_name + "= (SELECT count(*) FROM " + data_table_name + " as data_table where data_table.groupsharassed ilike '" + totals_match_pattern[i]
+											+ "' and ST_Intersects(" + county_table_name + ".geom, ST_SetSRID(ST_MakePoint(data_table.lon, data_table.lat), 4326))),")
 					})}`;
 					
 
-const groups_harassed_column = 'Groupsharassed';
+const groups_harassed_column = 'groupsharassed';
 // TODO move to globals/resources, as a better data structure
 const race_ethnicity = ["'Jewish'", "'African American'", "'Arab'", "'Armenian'", "'Asian American'", "'Latinx'", "'Native American/Indigenous'", "'Pacific Islander'",
 						"'Chinese'", "'Japanese American'", "'White'"];
@@ -104,7 +104,7 @@ const categorizeHarassed = `UPDATE ${data_table_name} SET
 // 'Chinese', 'Japanese American', 'White']),
 // religion =  array_intersect(groups, ARRAY['Muslim', 'Sikh']),
 // gender =  array_intersect(groups, ARRAY['Male', 'Female', 'Non-Binary', 'LGBTQ'])
-// FROM (SELECT string_to_array("Groupsharassed", ',') as groups, id FROM hcmdata) as subquery
+// FROM (SELECT string_to_array("groupsharassed", ',') as groups, id FROM hcmdata) as subquery
 // WHERE subquery.id = hcmdata.id
 
 router.use((req, res, next) => {
