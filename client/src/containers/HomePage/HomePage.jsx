@@ -40,7 +40,7 @@ class HomePage extends Component {
   async componentDidMount() {
     getAllData().then(values => {
       this.setState({
-        data: { states: storeStateData(values[0].data), counties: storeCountyData(values[1].data) },
+        data: { states: storeStateData(values[0].result) },
         isFetching: false
       });
       

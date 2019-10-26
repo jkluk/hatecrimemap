@@ -34,6 +34,9 @@ const groupsHarassed = {
 	]
 }
 
+// flattener by category for DB use
+// flattener to array for DB use and filtering (report page, utilities)
+
 let key = 0;
 Object.keys(groupsHarassed).forEach(target => {
 	groupsHarassed[target].forEach((group) => {
@@ -47,5 +50,5 @@ Object.keys(groupsHarassed).forEach(target => {
 	  }
 	});
 });
-
+console.log(groupsHarassed);
 export default groupsHarassed

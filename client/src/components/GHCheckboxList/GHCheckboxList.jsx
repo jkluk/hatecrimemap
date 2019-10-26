@@ -53,6 +53,7 @@ const createCheckbox = (name, label, key, sub_groups, onClick, classes, groupsCh
       </React.Fragment>
     )
   } else {
+    // Test if a hidden (but previously checked) box passes through. We want Japanese American IFF Asian American is checked
     return (
       <FormControlLabel
         control={

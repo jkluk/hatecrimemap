@@ -6,16 +6,16 @@ export const CHARTS = {
 }
 
 // var raceData = 
-// // ( ({ african_american_harassed_total, arab_harassed_total, asian_american_harassed_total, latinx_harassed_total, native_american_harassed_total, pacific_islander_harassed_total, immigrants_harassed_total, white_harassed_total }) => ({ african_american_harassed_total, arab_harassed_total, asian_american_harassed_total, latinx_harassed_total, native_american_harassed_total, pacific_islander_harassed_total, immigrants_harassed_total, white_harassed_total }) )(statetotals[currentState]);
+// // ( ({ african_american, arab, asian_american, latinx, native_american, pacific_islander, immigrants, white }) => ({ african_american, arab, asian_american, latinx, native_american, pacific_islander, immigrants, white }) )(statetotals[currentState]);
 // var religionData = [];
-// //( ({jewish_harassed_total, muslim_harassed_total, sikh_harassed_total}) => ({jewish_harassed_total, muslim_harassed_total, sikh_harassed_total}) )(statetotals[currentState]);
+// //( ({jewish, muslim, sikh}) => ({jewish, muslim, sikh}) )(statetotals[currentState]);
 // var genderData = [];
-// //( ({lgbt_harassed_total, women_harassed_total, girls_harassed_total, men_harassed_total, boys_harassed_total}) => ({lgbt_harassed_total, women_harassed_total, girls_harassed_total, men_harassed_total, boys_harassed_total}) )(statetotals[currentState]);
+// //( ({lgbt, women, girls, men, boys}) => ({lgbt, women, girls, men, boys}) )(statetotals[currentState]);
 // var otherData = [];
-// //( ({disabled_harassed_total, trump_supporter_harassed_total, others_harassed_total}) => ({disabled_harassed_total, trump_supporter_harassed_total, others_harassed_total}))(statetotals[currentState]);
+// //( ({disabled, trump_supporter, others}) => ({disabled, trump_supporter, others}))(statetotals[currentState]);
 
 var raceChartData = {
-  labels: ["African American", "Arab", "Asian American", "Chinese", "Native American/Alaska Native", "Latinx", "Pacific Islander", "White"],
+  labels: ["Jewish", "African American", "Arab", "Asian American", "Chinese", "Native American/Indigenous", "Latinx", "Pacific Islander", "White"],
   datasets: [
   {
     label:"Number of Hate Crimes against Race Groups",
@@ -28,7 +28,7 @@ var raceChartData = {
 };
 
 var religionChartData = {
-  labels: ["Jewish", "Muslim", "Sikh"],
+  labels: ["Muslim", "Sikh"],
   datasets: [
   {
     label:"Number of Hate Crimes against Religious Groups",
@@ -40,7 +40,7 @@ var religionChartData = {
   }]
 };
 var genderChartData = {
-  labels: ["Women", "Men", "Girls", "Boys"],
+  labels: ["Male", "Female", "Non-Binary", "LGBTQ"],
   datasets: [
   {
     label:"Number of Hate Crimes based on Gender",
@@ -52,7 +52,7 @@ var genderChartData = {
   }]
 };
 var otherChartData = {
-  labels: ["LGBT", "Trump Supporter", "Disabled"],
+  labels: ["Trump Supporter", "Disabled", "Immigrants", "Other"],
   datasets: [
   {
     label:"Number of Hate Crimes against Other Groups",
@@ -86,34 +86,36 @@ export function getChartData(chart, allData) {
   return chartData;
 }
 
+// TODO: move labels to globals for consistency
 const getRaceData = (data) => (
   [
-    data['african_american_harassed_total'], data['arab_harassed_total'],
-    data['asian_american_harassed_total'], data['latinx_harassed_total'],
-    data['native_american_harassed_total'], data['pacific_islander_harassed_total'],
-    data['immigrants_harassed_total'], data['white_harassed_total']
+    data['jewish'],
+    data['african_american'], data['arab'],
+    data['asian_american'], data['chinese'], 
+    data['native_american'], data['latinx'], data['pacific_islander'],
+    data['white']
   ]
 );
 
 const getReligionData = (data) => (
   [
-    data['jewish_harassed_total'], data['muslim_harassed_total'],
-    data['sikh_harassed_total']
+    data['muslim'],
+    data['sikh']
   ]
 );
 
 const getGenderData = (data) => (
   [
-    data['lgbt_harassed_total'], data['women_harassed_total'],
-    data['girls_harassed_total'], data['men_harassed_total'],
-    data['boys_harssed_total']
+    data['male'], data['female'], data['nonbinary']
   ]
 );
 
 const getOtherData = (data) => (
   [
-    data['diabled_harassed_total'], data['trump_supporter_harassed_total'],
-    data['others_harassed_total']
+    data['trump_supporter'],
+    data['diabled'],
+    data['immigrants'],
+    data['others']
   ]
 );
 

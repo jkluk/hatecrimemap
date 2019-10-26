@@ -9,7 +9,7 @@ var _countyData = {};
 export function storeStateData(stateData) {
 	let max = 0;
 	stateData.forEach(state => {
-		max = max < state.sum_harassment ? state.sum_harassment : max;
+		max = max < state.state_total ? state.state_total : max;
 		_stateData[state.name] = {... state };	// pull out and index by state's name
 	});
 	_stateData.max = max;
@@ -19,7 +19,7 @@ export function storeStateData(stateData) {
 export function storeCountyData(countyData) {
 	let max = 0;
 	countyData.forEach(county => {
-		max = max < county.sum_harassment ? county.sum_harassment : max;
+		max = max < county.county_total ? county.county_total : max;
 		_countyData[county.county_state] = {... county };
 	});
 	_countyData.max = max;
@@ -27,8 +27,8 @@ export function storeCountyData(countyData) {
 }
 
 function getStateData() {
-	return axios.get('/api/maps/statedata')
-	.then(res => { return res.data })
+	return axios.get('/api/totals/')
+	.then(res => { console.log(res); return res.data })
 	.catch((err) => {
 		alert(`API call failed: ${err}`);
 		return {};
@@ -68,12 +68,12 @@ export function resetStateColor(layer, statesData) {
 	const STATE_NAME = layer.feature.properties.NAME;
 	const stateData = statesData[STATE_NAME];
 
-	if(!stateData || stateData.sum_harassment <= 0) {
+	if(!stateData || stateData.state_total <= 0) {
 		layer.setStyle({color: 'rgba(0, 0, 0, 0)'});
 		return;
 	}
 
-	let colorHashed = hashStateColor(stateData.sum_harassment, statesData.max);
+	let colorHashed = hashStateColor(stateData.state_total, statesData.max);
     
     layer.setStyle({fillColor: `rgb(255, ${150-colorHashed}, ${150-colorHashed})`})
 }
@@ -81,12 +81,12 @@ export function resetStateColor(layer, statesData) {
 export function eachState(feature, layer, statesData, currentState, setStateDisplay) {
 	const STATE_NAME = feature.properties.NAME;
 	const stateData = statesData[STATE_NAME];
-	if(!stateData || stateData.sum_harassment <= 0) {
+	if(!stateData || stateData.state_total <= 0) {
 		layer.setStyle({color: 'rgba(0, 0, 0, 0)'});
 		return;
 	}
-    // const colorHashed = colorBins[Math.floor((5*stateData.sum_harassment-1)/total)];
-    let colorHashed = hashStateColor(stateData.sum_harassment, statesData.max);
+    // const colorHashed = colorBins[Math.floor((5*stateData.state_total-1)/total)];
+    let colorHashed = hashStateColor(stateData.state_total, statesData.max);
     layer.on('mouseover', function(event){
 	    if(!setStateDisplay(STATE_NAME)) return;  // setStateDisplay() will return false if we're locked onto something else
 	    // layer._path.classList.add("show-state");
@@ -118,14 +118,14 @@ export function eachState(feature, layer, statesData, currentState, setStateDisp
 
 export function eachStatesCounties(feature, layer, countytotals, setCountyDisplay, total=33)
 {
-	if(countytotals[feature.properties.County_state] && countytotals[feature.properties.County_state].sum_harassment > 0) {
-    // const colorHashed = colorBins[Math.floor((5*countytotals[feature.properties.County_state].sum_harassment-1)/total)];
+	if(countytotals[feature.properties.County_state] && countytotals[feature.properties.County_state].state_total > 0) {
+    // const colorHashed = colorBins[Math.floor((5*countytotals[feature.properties.County_state].state_total-1)/total)];
     let colorHashed = 0;
-    // if(countytotals[feature.properties.County_state].sum_harassment < total/10) colorHashed = colorBins[0];
-    // else if(countytotals[feature.properties.County_state].sum_harassment < total/8) colorHashed = colorBins[1];
-    // else if(countytotals[feature.properties.County_state].sum_harassment < total/6) colorHashed = colorBins[2];
-    // else if(countytotals[feature.properties.County_state].sum_harassment < total/4) colorHashed = colorBins[3];
-    // else if(countytotals[feature.properties.County_state].sum_harassment < total + 1) colorHashed = colorBins[4];
+    // if(countytotals[feature.properties.County_state].state_total < total/10) colorHashed = colorBins[0];
+    // else if(countytotals[feature.properties.County_state].state_total < total/8) colorHashed = colorBins[1];
+    // else if(countytotals[feature.properties.County_state].state_total < total/6) colorHashed = colorBins[2];
+    // else if(countytotals[feature.properties.County_state].state_total < total/4) colorHashed = colorBins[3];
+    // else if(countytotals[feature.properties.County_state].state_total < total + 1) colorHashed = colorBins[4];
     colorHashed = colorBins[0];
     layer.on('mouseover', function(event){
       if(!setCountyDisplay(feature.properties.County_state)) return;  // setCountyDisplay() will return false if we're locked onto something else
