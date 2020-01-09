@@ -71,32 +71,6 @@ router.get('/usapoints', (req, res) => {
     .catch(err => console.log('ERROR:', err));
 });
 
-router.get('/unreviewedpoints', (req, res) => {
-  const { email, password, loggedIn } = req.query;
-  if (loggedIn === 'false' && !checkLoginInfo(email, password)) {
-    res.status(403).send('unauthorized');
-    return;
-  }
-
-  db.any(findUnreviewedPoints)
-    .then((mapdata) => {
-      res.status(200)
-        .json({
-          status: 'success',
-          mapdata,
-        });
-    })
-    .catch(err => console.log('ERROR:', err));
-});
-
-router.post('/reviewedincident', (req, res) => {
-  const updateUnreviewedIncident = new PQ('UPDATE hcmdata SET verified = $2 WHERE id = $1', Object.values(req.body));
-
-  db.none(updateUnreviewedIncident)
-    .then(() => res.send('Incident report reviewed'))
-    .catch(err => console.log('ERROR:', err));
-});
-
 router.post('/incidentreport', (req, res) => {
   const values = [...Object.values(req.body), false, false];
   const addUnreviewedIncident = new PQ('INSERT INTO hcmdata(date, datesubmitted, groupsharassed, lat, locationname, lon, sourceurl, validsourceurl, verified, reviewedbystudent, reporttype, attemptedwaybackurl, validwaybackurl) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)', values);
