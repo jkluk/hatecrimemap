@@ -46,6 +46,7 @@ const getColumnHeaders = () => [
 
 const getInitialState = () => ({
   incidentReports: [],
+  loggedIn: false,
   email: '',
   password: '',
   openDialog: false,
@@ -56,9 +57,36 @@ class VerifyIncidentsPage extends Component {
   state = getInitialState();
 
   componentDidMount() {
-    if (checkLoggedInCookie()) {
-      this.getUnreviewedPoints('', '', true);
-    }
+    this.checkLoggedIn()
+      // this.getUnreviewedPoints('', '', true);
+  }
+
+  checkLoggedIn = () => {
+    axios.get('/api/auth/check')
+        .then( (res) => {
+          if(res.data.auth) {
+            this.setState({ loggedIn: true })
+          }
+        })
+        .catch((err) => alert(err))
+  }
+
+  loadUnreviewedData = () => {
+    axios.get('/api/verify/unreviewed')
+        .then( (res) => {
+          console.log(res);
+          if(!res.data.mapdata) {
+            this.setState({ loggedIn: false });  // TODO: it could be a server error, not authentication? Add a check
+            return;
+          }
+          const incidentReports = addGroupsHarassedSplit(res.data.mapdata);
+          addRowNumProperty(incidentReports);
+          sortByDateSubmitted(incidentReports);
+          this.setState({ incidentReports });
+        })
+        .catch((err) => {
+          alert(err);
+        })
   }
 
   getUnreviewedPoints = (email, password, loggedIn) => {
@@ -122,15 +150,28 @@ class VerifyIncidentsPage extends Component {
 
   login = () => {
     const { email, password } = this.state;
-    this.getUnreviewedPoints(email, password, checkLoggedInCookie());
+    console.log("Logging in with: " + email + password)
+    axios.post('/api/auth/login', { useremail: email, password: password })
+    .then( (res) => {
+      console.log(res);
+      if(res.data.auth_user) {
+        this.setState({loggedIn: true});
+        this.loadUnreviewedData();
+      } else {
+        alert("Error logging in with the credentials provided.")
+      }
+    })
+    .catch((err) => {
+      alert(err);
+    })
   }
 
   render() {
-    const { incidentReports, email, password, openDialog, activeReport } = this.state;
+    const { incidentReports, email, password, openDialog, activeReport, loggedIn } = this.state;
     const { classes } = this.props;
     const tableData = this.convertReportsToTableData(incidentReports);
 
-    if (!checkLoggedInCookie()) {
+    if (!loggedIn) {
       return (
         <Login
           email={email}

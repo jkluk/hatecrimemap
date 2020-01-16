@@ -7,6 +7,11 @@ const router = express.Router();
 
 const session = require('express-session');
 
+router.get('/check', (req, res) => {
+  const loggedIn = req.session.user ? true : false;
+  res.send({auth: loggedIn });
+})
+
 router.post('/login', (req, res) => {
   const { useremail, password } = req.body;
   // TODO: crypt() call should be done at this point, not on the DB (password will be sent in plaintext), but the secret is on the DB?

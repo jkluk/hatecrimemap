@@ -18,7 +18,7 @@ router.use('*', (req, res, next) => {
 const columns = 'date, datesubmitted, lon, lat, reporttype, locationname, verified, id, sourceurl, groupsharassed, validsourceurl, waybackurl, validwaybackurl';
 const findUnreviewedPoints = `SELECT ${columns} FROM hcmdata WHERE verified = -1`;
 
-router.get('/unreviewedpoints', (req, res) => {
+router.get('/unreviewed', (req, res) => {
   db.any(findUnreviewedPoints)
     .then((mapdata) => {
       res.status(200)

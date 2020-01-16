@@ -65,7 +65,7 @@ class Login extends Component {
             <TextField
               id="email"
               name="email"
-              label="Email"
+              label="Username/Email"
               value={email}
               onChange={onChange}
               className={classes.textField}
