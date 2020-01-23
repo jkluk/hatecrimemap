@@ -35,14 +35,13 @@ const SimpleTable = ({ columnHeaders, tableData, classes }) => (
     <Table className={classes.table}>
       <TableHead>
         <TableRow>
-          <TableCell className={classes.cell} key="row">Row</TableCell>
+          <TableCell className={classes.cell} key="id">ID</TableCell>
           {columnHeaders.map(header => <TableCell className={classes.cell} key={header}>{header}</TableCell>)}
         </TableRow>
       </TableHead>
       <TableBody>
         {tableData.map((row, i) => (
-          <TableRow className={classes.row} key={uuidv4()}>
-            <TableCell className={classes.cell} key="rowNum">{i + 1}</TableCell>
+          <TableRow className={classes.row} key={row[0]}>
             {row.map(cell => <TableCell className={classes.cell} key={uuidv4()}>{cell}</TableCell>)}
           </TableRow>
         ))}

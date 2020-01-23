@@ -9,6 +9,8 @@ import {
   List,
   ListItem,
   ListItemText,
+  CircularProgress,
+  LinearProgress
 } from '@material-ui/core';
 import { MoreVert } from '@material-ui/icons';
 
@@ -31,8 +33,15 @@ const styles = () => ({
   progress: {
     position: 'fixed',
     top: '50%',
-    left: '50%',
+    left: '25%',
+    right: '25%'
   },
+  loading: {
+    display: 'flex',
+    'justify-content': 'center',
+    'margin-top': '16px',
+    width: '100%'
+  }
 });
 
 const getColumnHeaders = () => [
@@ -45,8 +54,8 @@ const getColumnHeaders = () => [
 ];
 
 const getInitialState = () => ({
-  incidentReports: [],
-  loggedIn: false,
+  incidentReports: null,
+  loggedIn: null,
   email: '',
   password: '',
   openDialog: false,
@@ -58,14 +67,16 @@ class VerifyIncidentsPage extends Component {
 
   componentDidMount() {
     this.checkLoggedIn()
-      // this.getUnreviewedPoints('', '', true);
   }
 
   checkLoggedIn = () => {
     axios.get('/api/auth/check')
         .then( (res) => {
           if(res.data.auth) {
+            this.loadUnreviewedData();
             this.setState({ loggedIn: true })
+          } else {
+            this.setState({ loggedIn: false })
           }
         })
         .catch((err) => alert(err))
@@ -74,40 +85,25 @@ class VerifyIncidentsPage extends Component {
   loadUnreviewedData = () => {
     axios.get('/api/verify/unreviewed')
         .then( (res) => {
-          console.log(res);
-          if(!res.data.mapdata) {
+          if(!res.data.incidents) {
             this.setState({ loggedIn: false });  // TODO: it could be a server error, not authentication? Add a check
             return;
           }
-          const incidentReports = addGroupsHarassedSplit(res.data.mapdata);
-          addRowNumProperty(incidentReports);
-          sortByDateSubmitted(incidentReports);
-          this.setState({ incidentReports });
+          console.log(res.data);
+          // const incidentReports = addGroupsHarassedSplit(res.data.incidents);
+          // addRowNumProperty(incidentReports);
+          // sortByDateSubmitted(incidentReports);
+          this.setState({ incidentReports: this.convertReportsToTableData(res.data.incidents) });
         })
         .catch((err) => {
           alert(err);
         })
   }
 
-  getUnreviewedPoints = (email, password, loggedIn) => {
-    axios.get('/api/maps/unreviewedpoints', { params: { email, password, loggedIn } })
-      .then(({ data: { mapdata } }) => {
-        setCookie('loggedIn', 'true', 0.05);
-        const incidentReports = addGroupsHarassedSplit(mapdata);
-        addRowNumProperty(incidentReports);
-        sortByDateSubmitted(incidentReports);
-        this.setState({ incidentReports });
-      })
-      .catch((err) => {
-        alert(`Email or password incorrect. Please try again.\n\n${err}`);
-        this.setState({ email: '', password: '' });
-      });
-  }
-
-  openActions = rowNum => () => {
-    const { incidentReports } = this.state;
+  openActions = id => () => {
+    console.log("Opening " + id)
     this.setState({
-      activeReport: incidentReports[rowNum],
+      activeReport: id,
     }, this.handleOpenDialog);
   }
 
@@ -119,28 +115,41 @@ class VerifyIncidentsPage extends Component {
 
   convertReportsToTableData = (reports) => {
     const displayableData = reports.map(({
-      rowNum,
-      validsourceurl,
+      id,
+      incidentdate,
+      submittedon,
+      location,
       sourceurl,
-      locationname,
+      isvalidsourceurl,
+      waybackurl,
+      othergroups,
       groupsharassed,
-      date,
-      datesubmitted,
     }) => {
-      const link = validsourceurl
+      const link = sourceurl
         ? <a href={sourceurl} target="_blank">Source link</a>
         : 'No link';
       const actionButton = (
-        <IconButton onClick={this.openActions(rowNum)}>
+        <IconButton onClick={this.openActions(id)}>
           <MoreVert />
         </IconButton>
       );
 
+      if(!incidentdate) {
+        incidentdate = "N/A";
+      } else {
+        incidentdate = new Date(incidentdate).toDateString();
+      }
+
+      if(othergroups) {
+        groupsharassed.push(othergroups)
+      }
+
       return [
-        locationname,
-        new Date(date).toDateString(),
-        new Date(datesubmitted).toDateString(),
-        groupsharassed,
+        id,
+        location,
+        incidentdate,
+        new Date(submittedon).toDateString(),
+        groupsharassed.join(", "),
         link,
         actionButton,
       ];
@@ -148,12 +157,11 @@ class VerifyIncidentsPage extends Component {
     return displayableData;
   }
 
-  login = () => {
+  login = (e) => {
+    e.preventDefault();
     const { email, password } = this.state;
-    console.log("Logging in with: " + email + password)
     axios.post('/api/auth/login', { useremail: email, password: password })
     .then( (res) => {
-      console.log(res);
       if(res.data.auth_user) {
         this.setState({loggedIn: true});
         this.loadUnreviewedData();
@@ -169,9 +177,16 @@ class VerifyIncidentsPage extends Component {
   render() {
     const { incidentReports, email, password, openDialog, activeReport, loggedIn } = this.state;
     const { classes } = this.props;
-    const tableData = this.convertReportsToTableData(incidentReports);
 
-    if (!loggedIn) {
+    if(loggedIn == null) {
+      return (
+        <div className={classes.loading}>
+          <CircularProgress />
+        </div>
+       );
+    }
+
+    if (loggedIn == false) {
       return (
         <Login
           email={email}
@@ -182,11 +197,21 @@ class VerifyIncidentsPage extends Component {
       );
     }
 
+
+    if (incidentReports == null) {
+      return (
+        <div className={classes.loading}>
+          <LinearProgress className={classes.progress} />
+        </div>
+       );
+    }
+
     return (
       <div className={classes.root}>
         <SimpleTable
           columnHeaders={getColumnHeaders()}
-          tableData={tableData}
+          tableData={incidentReports}
+          key="incidenttable"
         />
         {openDialog &&
           <Dialog onClose={this.handleCloseDialog} open={openDialog}>
@@ -195,19 +220,19 @@ class VerifyIncidentsPage extends Component {
               <List>
                 <ListItem
                   button
-                  onClick={reviewIncidentReport(activeReport.id, 1, this.handleCloseDialog)}
+                  onClick={reviewIncidentReport(activeReport, 1, this.handleCloseDialog)}
                 >
                   <ListItemText primary="Add as Verified" />
                 </ListItem>
                 <ListItem
                   button
-                  onClick={reviewIncidentReport(activeReport.id, 0, this.handleCloseDialog)}
+                  onClick={reviewIncidentReport(activeReport, 0, this.handleCloseDialog)}
                 >
                   <ListItemText primary="Add as Unverified" />
                 </ListItem>
                 <ListItem
                   button
-                  onClick={deleteIncidentReport(activeReport.id, this.handleCloseDialog)}
+                  onClick={deleteIncidentReport(activeReport, this.handleCloseDialog)}
                 >
                   <ListItemText primary="Delete Report" />
                 </ListItem>

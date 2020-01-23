@@ -15,23 +15,33 @@ router.use('*', (req, res, next) => {
   }
 });
 
-const columns = 'date, datesubmitted, lon, lat, reporttype, locationname, verified, id, sourceurl, groupsharassed, validsourceurl, waybackurl, validwaybackurl';
-const findUnreviewedPoints = `SELECT ${columns} FROM hcmdata WHERE verified = -1`;
+const columns = 'i.id, i.location, i.incidentdate, i.submittedon, i.sourceurl, i.waybackurl, i.othergroup, g.groupsharassed'
+const findUnreviewedPoints = `SELECT ${columns}
+                              FROM incident i
+                              JOIN (
+                                SELECT ig.incident_id AS id, array_agg(groups.name) AS groupsharassed
+                                  FROM incident_groups ig
+                                JOIN groups ON groups.id = ig.group_id
+                                GROUP BY ig.incident_id
+                              ) g USING (id)
+                                WHERE i.verified = false AND i.issourceurlvalid = true
+                                ORDER BY i.submittedon`
 
 router.get('/unreviewed', (req, res) => {
   db.any(findUnreviewedPoints)
-    .then((mapdata) => {
+    .then((incidents) => {
       res.status(200)
         .json({
           status: 'success',
-          mapdata,
+          incidents,
         });
     })
     .catch(err => console.log('ERROR:', err));
 });
 
 router.post('/reviewedincident', (req, res) => {
-  const updateUnreviewedIncident = new PQ('UPDATE hcmdata SET verified = $2 WHERE id = $1', Object.values(req.body));
+  const { id, verified } = req.body;
+  const updateUnreviewedIncident = new PQ('UPDATE incident SET verified = $2 WHERE id = $1', [id, verified]);
 
   db.none(updateUnreviewedIncident)
     .then(() => res.send('Incident report reviewed'))
