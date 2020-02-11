@@ -25,7 +25,7 @@ app.use(session({
 	secret: 'dumb',
 	resave: false,
 	saveUninitialized: false, // force save to the store. A session is uninitialized when it is new but not modified. 
-	cookie: {maxAge: 5*60*1000}	// 5 minutes
+	cookie: {maxAge: 24*60*60*1000}	// 24 hours (1 day)
 }));
 
 app.use('/api', routes);
