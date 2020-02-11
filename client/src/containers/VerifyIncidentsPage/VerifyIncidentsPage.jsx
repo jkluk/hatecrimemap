@@ -73,31 +73,13 @@ class VerifyIncidentsPage extends Component {
     axios.get('/api/auth/check')
         .then( (res) => {
           if(res.data.auth) {
-            this.loadUnreviewedData();
+            this.fetchData();
             this.setState({ loggedIn: true })
           } else {
             this.setState({ loggedIn: false })
           }
         })
         .catch((err) => alert(err))
-  }
-
-  loadUnreviewedData = () => {
-    axios.get('/api/verify/unreviewed')
-        .then( (res) => {
-          if(!res.data.incidents) {
-            this.setState({ loggedIn: false });  // TODO: it could be a server error, not authentication? Add a check
-            return;
-          }
-          console.log(res.data);
-          // const incidentReports = addGroupsHarassedSplit(res.data.incidents);
-          // addRowNumProperty(incidentReports);
-          // sortByDateSubmitted(incidentReports);
-          this.setState({ incidentReports: this.convertReportsToTableData(res.data.incidents) });
-        })
-        .catch((err) => {
-          alert(err);
-        })
   }
 
   openActions = id => () => {
@@ -157,6 +139,20 @@ class VerifyIncidentsPage extends Component {
     return displayableData;
   }
 
+  fetchData = (perPage=10, page=0) => {
+    axios.get(`/api/verify/unreviewed/${perPage}/${page}`)
+      .then( (res) => {
+        if(!res.data.incidents) {
+          this.setState({ loggedIn: false });  // TODO: it could be a server error, not authentication? Add a check
+          return;
+        }
+        this.setState({ incidentReports: this.convertReportsToTableData(res.data.incidents) });
+      })
+      .catch((err) => {
+        alert(err);
+      })
+  }
+
   login = (e) => {
     e.preventDefault();
     const { email, password } = this.state;
@@ -164,7 +160,7 @@ class VerifyIncidentsPage extends Component {
     .then( (res) => {
       if(res.data.auth_user) {
         this.setState({loggedIn: true});
-        this.loadUnreviewedData();
+        this.fetchData();
       } else {
         alert("Error logging in with the credentials provided.")
       }
@@ -212,6 +208,7 @@ class VerifyIncidentsPage extends Component {
           columnHeaders={getColumnHeaders()}
           tableData={incidentReports}
           key="incidenttable"
+          fetchData={this.fetchData}
         />
         {openDialog &&
           <Dialog onClose={this.handleCloseDialog} open={openDialog}>

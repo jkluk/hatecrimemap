@@ -27,6 +27,28 @@ const findUnreviewedPoints = `SELECT ${columns}
                                 WHERE i.verified = false AND i.issourceurlvalid = true
                                 ORDER BY i.submittedon`
 
+router.get('/unreviewedcount', (req, res) => {
+  db.one('SELECT COUNT(*) FROM incident')
+    .then((counts) => {
+      res.status(200)
+        .json({
+          status: 'success',
+          counts: counts.count
+        })
+    })
+})
+
+router.get('/unreviewed/:per/:page', (req, res) => {
+  db.any(`SELECT * FROM paginate_by_offset(${req.params.page}, ${req.params.per})`)
+    .then((incidents) => {
+      res.status(200)
+        .json({
+          status: 'success',
+          incidents
+        })
+    })
+})
+
 router.get('/unreviewed', (req, res) => {
   db.any(findUnreviewedPoints)
     .then((incidents) => {
