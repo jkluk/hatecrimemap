@@ -90,53 +90,16 @@ export function getChartData(chart, allData) {
     chartData = topChartData;
   }
 
-  data = getTopData(allData);
-  const [total, ...labels] = data.labels
-  chartData.datasets[0].data = data.counts.filter(x => x!==undefined); // because we don't want "counts" => undefined
-  chartData.labels = labels;
+  data = mapData(allData);
+  chartData.datasets[0].data = data.counts; // because we don't want "counts" => undefined
+  chartData.labels = data.labels;
   return chartData;
 }
 
-// TODO: move labels to globals for consistency
-const getRaceData = (data) => (
-  [
-    data['jewish'],
-    data['african_american'], data['arab'],
-    data['asian_american'], data['chinese'], 
-    data['native_american'], data['latinx'], data['pacific_islander'],
-    data['white']
-  ]
-);
-
-const getReligionData = (data) => (
-  [
-    data['muslim'],
-    data['sikh']
-  ]
-);
-
-const getGenderData = (data) => (
-  [
-    data['male'], data['female'], data['nonbinary']
-  ]
-);
-
-const getOtherData = (data) => (
-  {
-    labels: Object.keys(data),
-    counts: Object.entries(data).map(([parent, counts]) => counts.count)
-  }
-);
-
-const getTopData = (data) => (
-    {
-      labels: Object.keys(data),
-      counts: Object.entries(data).map(([parent, counts]) => counts.count)
-    }
-    // [
-    //   data['Race/Ethnicity'],
-    //   data['Gender/Sexuality'],
-    //   data['Religion'],
-    //   data['Other']
-    // ]
-  )
+const mapData = (data) => {
+  data = Object.entries(data).filter(([key, obj]) => obj && (obj.count || obj.count===0))
+  return ({
+            labels: data.map(([label, x]) => label),
+            counts: data.map(([parent, counts]) => counts.count)
+          })
+};

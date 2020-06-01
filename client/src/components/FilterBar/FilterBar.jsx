@@ -32,7 +32,7 @@ const FilterBar = (props) => {
         </ToggleButton>
       </ToggleButtonGroup>
       Placeholder for filter*/}
-      <Grid component="label" container alignItems="center" spacing={1}>
+      <Grid component="label" container alignItems="center">
         <Grid item>Published Only</Grid>
         <Grid item>
           <Switch checked={true} name="checkedC" />

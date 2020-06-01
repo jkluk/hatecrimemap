@@ -12,6 +12,7 @@ const ChartText = (props) => {
     return null;
   }
 
+  console.log(props.data)
   const counts = Object.entries(props.data).filter(([key, x]) => x && x.count)
 
   return (
