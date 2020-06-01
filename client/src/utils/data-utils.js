@@ -50,13 +50,12 @@ export function storeStateData(data, start) {
 	data.forEach(state_group => {
 		let { name, parent, group, count } = state_group;
 		// we want to remove this if statement, the StateStructure should exactly reflect the data
-		if(!stateData[name][parent].children[group])
+		if(stateData[name][parent].children[group]) // skip those whose groups don't match with that incident's primary group
 		{
-			stateData[name][parent].children[group] = {}
+			count = parseInt(count)
+			stateData[name][parent].children[group].count = count
+			stateData[name].count += count
 		}
-		count = parseInt(count)
-		stateData[name][parent].children[group].count = count
-		stateData[name].count += count
 	})
 
 	let maxState = 0;

@@ -15,7 +15,7 @@ export const CHARTS = {
 // var otherData = [];
 // //( ({disabled, trump_supporter, others}) => ({disabled, trump_supporter, others}))(statetotals[currentState]);
 
-const CHART_COLORS = ["#003f5c", "#ffa600", "#665191", "#d45087", "#f95d6a", "#a05195", "#ff7c43", "#2f4b7c"]
+const CHART_COLORS = ["#003f5c", "#f95d6a", "#665191", "#d45087", "#ffa600", "#a05195", "#ff7c43", "#2f4b7c"]
 
 var raceChartData = {
   datasets: [
