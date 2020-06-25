@@ -42,8 +42,9 @@ export function createGroupsHarassed(groups) {
 }
 
 export function createDataToSubmit(formData) {
-  const { targetCategory, groups, primaryGroup, groupsChecked, groupsExpanded, latLng, location, sourceurl,
-          date, associatedLink, description } = formData;
+  const { targetCategory, groups, primaryGroup, groupsChecked, groupsExpanded,
+          latLng, location, sourceurl, other_race, other_religion, other_gender, other_misc,
+          date, description } = formData;
   return ({
     lat: latLng.lat,
     lon: latLng.lng,
@@ -52,10 +53,12 @@ export function createDataToSubmit(formData) {
     sourceurl: sourceurl,
     primaryGroup: primaryGroup,
     groups: groupsChecked,
-    othergroups: "",
+    other_race: other_race,
+    other_religion: other_religion,
+    other_gender: other_gender,
+    other_misc: other_misc,
     description: description
-  }); // TODO allow user to input their own text, then SANITIZE
-  // [coord, location, incidentdate, sourceurl, othergroup]
+  });
 }
 
 export const reviewIncidentReport = (id, verified, callback = null) => () => {
