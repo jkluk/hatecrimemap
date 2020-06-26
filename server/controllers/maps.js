@@ -104,9 +104,11 @@ router.post('/incident', (req, res) => {
     $5::varchar, $6::integer, $7::int[], $8::varchar, $9::varchar, $10::varchar, $11::varchar, $12::text)`,
     [lat, lon, location, new Date(incidentdate), sourceurl, primaryGroup, groups,
     other_race, other_religion, other_gender, other_misc, description])
-  .then(res => {
-    console.log(res);
-    res.status(200).send('Incident inputted');
+  .then(id => {
+    if (id.insert_incident)
+      res.status(200).send('Incident inputted');
+    else
+      res.status(500).send('Could not insert incident');
   })
   .catch(err => {
     console.log(err);

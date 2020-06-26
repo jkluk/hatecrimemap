@@ -69,7 +69,26 @@ export const reviewIncidentReport = (id, verified, callback = null) => () => {
       window.location.reload();
     })
     .catch(err => console.log(err));
-  
+};
+
+export const validateIncidentReport = (id, urlvalid, callback = null) => () => {
+  axios.post('/api/verify/validateincident', { id, urvalid })
+    .then(res => {
+      console.log(res.data)
+      callback();
+      window.location.reload();
+    })
+    .catch(err => console.log(err));
+};
+
+export const publishedIncidentReport = (id, published, callback = null) => () => {
+  axios.post('/api/verify/publishedincident', { id, published })
+    .then(res => {
+      console.log(res.data)
+      callback();
+      window.location.reload();
+    })
+    .catch(err => console.log(err));
 };
 
 export const deleteIncidentReport = (id, callback = null) => () => {
