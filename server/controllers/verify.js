@@ -28,7 +28,7 @@ const findUnreviewedPoints = `SELECT ${columns}
                                 ORDER BY i.submittedon`
 
 router.get('/unreviewedcount', (req, res) => {
-  db.one('SELECT COUNT(*) FROM incident')
+  db.one('SELECT COUNT(*) FROM incident WHERE verified=FALSE and issourceurlvalid=TRUE')
     .then((counts) => {
       res.status(200)
         .json({
