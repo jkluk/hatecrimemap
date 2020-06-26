@@ -72,7 +72,7 @@ export const reviewIncidentReport = (id, verified, callback = null) => () => {
 };
 
 export const validateIncidentReport = (id, urlvalid, callback = null) => () => {
-  axios.post('/api/verify/validateincident', { id, urvalid })
+  axios.post('/api/verify/validateincident', { id, urlvalid })
     .then(res => {
       console.log(res.data)
       callback();
