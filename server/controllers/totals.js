@@ -238,7 +238,7 @@ router.get('/', (req, res) => {
 
 router.get('/:filter', (req, res) => {
 	let useQuery;
-	if (filter == 'published') {
+	if (req.params.filter == 'published') {
 		userQuery = statePublishedOnly
 	}
 	db.any(userQuery)
