@@ -236,8 +236,12 @@ router.get('/', (req, res) => {
 	.catch(err => console.log('ERROR: ', err));
 });
 
-router.get('/published', (req, res) => {
-	db.any(statePublishedOnly)
+router.get('/:filter', (req, res) => {
+	let useQuery;
+	if (filter == 'published') {
+		userQuery = statePublishedOnly
+	}
+	db.any(userQuery)
 	.then((result) => {
 		res.status(200)
 		.json({
