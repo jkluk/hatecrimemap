@@ -110,7 +110,7 @@ export async function getAllData() {
 	return Promise.all([getStateData(), getCountyData()]);
 }
 
-const colorBins = ["#f2f0f7", "#cbc9e2", "#9e9ac8", "#756bb1", "#54278f"];
+const colorBins = ["#f7f7f7", "#cccccc", "#969696", "#636363", "#252525"];
 var lockedLayer = null;
 var lockedLayerColor = null;
 

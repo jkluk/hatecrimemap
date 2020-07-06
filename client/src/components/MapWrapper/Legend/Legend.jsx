@@ -6,12 +6,12 @@ class Legend extends MapControl {
 	createLeafletElement(props) {
 		const getColor = d => {
 			// TODO: take these colors from/to data_utils
-			return d < 22 ? "#f2f0f7"
-			: d < 28 ? "#cbc9e2"
-			: d < 45 ? "#9e9ac8"
-			: d < 75 ? "#756bb1"
-			: d < 227 ? "#54278f"
-			: "#cccccc";
+			return d < 22 ? "#f7f7f7"
+			: d < 28 ? "#cccccc"
+			: d < 45 ? "#969696"
+			: d < 75 ? "#636363"
+			: d < 227 ? "#252525"
+			: "#ffffff";
 	    };
 
 	    const legend = L.Control.extend({
@@ -34,7 +34,9 @@ class Legend extends MapControl {
 				  );
 				}
 
-				div.innerHTML = labels.join("<br>");
+				let header = '<p><strong>Cases per state</strong></p>'
+
+				div.innerHTML = header + labels.join("<br>");
 				return div;
 		    }
 	    })
