@@ -1,9 +1,13 @@
 import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import './Charts.css';
-import { CHARTS, getChartData } from '../../utils/chart-utils';
-import { Bar } from 'react-chartjs-2';
+import { Button } from '@material-ui/core';
+import { ArrowBack } from '@material-ui/icons';
+import { CHARTS, CHART_STRINGS, getChartData, sumData } from '../../utils/chart-utils';
+import { Bar, Pie } from 'react-chartjs-2';
 import ChartsText from './ChartText';
+import Grid from '@material-ui/core/Grid';
+
 
 const styles = theme => ({
 
@@ -28,7 +32,7 @@ class Charts extends React.Component {
               // beginAtZero:true,
               // callback: function(value) {if(value % 1 ===0) {return value;}},
               min: 0,
-              max: parseInt(props.max) || 50
+              max: parseInt(props.max) || 68
               // stepSize: 1
             }
           }]
@@ -44,6 +48,9 @@ class Charts extends React.Component {
 
   barClick = (elems) => {
     // index into `data` of the bar clicked
+    if (!elems[0]) {
+      return
+    }
     const dataIdx = elems[0]._index
     switch(dataIdx) {
       case 0:
@@ -65,10 +72,19 @@ class Charts extends React.Component {
   render() {
     if (this.props.data && this.state.options) {
       if(this.state.currentDisplay != CHARTS.TOP) {
+        // Pie charts!
         return (
           <div className="charts">
-            <Bar data={getChartData(this.state.currentDisplay, this.state.drilldown)} options={this.state.options}
-                 onElementsClick={this.barUnClick} />
+            <Grid container justify="space-between">
+              <Grid item xs={3}>
+                <Button variant="outlined" color="primary" size="small" aria-label="back" onClick={this.barUnClick} startIcon={<ArrowBack />}>Back</Button>
+              </Grid>
+              <Grid item xs={6} style={{'textAlign': 'center'}}>
+                <h4>{CHART_STRINGS[this.state.currentDisplay]} ({sumData(this.state.drilldown)} total)</h4>
+              </Grid>
+              <Grid item xs={3}>{/* to center the title */}</Grid>
+            </Grid>
+            <Pie data={getChartData(this.state.currentDisplay, this.state.drilldown)} />
             <ChartsText data={this.state.drilldown} />
           </div>
         )
