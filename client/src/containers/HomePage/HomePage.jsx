@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { CircularProgress, Button, IconButton } from '@material-ui/core';
@@ -23,6 +23,59 @@ const styles = () => ({
     left: '50%',
   },
 });
+
+const FETCH_DATA_URL = '/api/totals/';
+
+/** Handles the logic of the HOC home page, which houses the Map and Sidemenu.
+ *  Fetches/processes data (with helper methods in @/utils/data-utils, but keep API logic here)
+ *  Child components should be purely functional, do not introduce logic into them.
+ */
+function HomePage() {
+  const [data, setData] = useState({data: [], isFetching: false})
+
+  // grab data once asynchronously
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setData({data: data.data, isFetching: true});
+        const response = await axios.get(FETCH_DATA_URL);
+        setData({data: response.data, isFetching: false});
+      } catch (e) {
+        console.err(e);
+        setData({data: data.data, isFetching: false});
+      }
+    }
+    fetchData();
+  }, []);
+
+
+  if (isFetching) {
+    // TODO: use Suspense when released
+    return <CircularProgress className={classes.progress} />;
+  }
+
+  return (
+    <div className="homePage">
+      <FirstTimeOverlay />
+        {/* TODO: context for mapdata and data.states? */}
+        <MapWrapper region={this.state.region} updateState={this.updateState}
+        statesRef={this.statesRef} mapRef={this.mapRef} alaskaRef={this.alaskaRef} hawaiiRef={this.hawaiiRef}
+        data={data} updateView={this.changeViewRegion}>
+          <MapBar changeRegion={this.changeViewRegion} region={this.state.region}/>
+        </MapWrapper>
+
+        <div className="side">
+          <SideMenu header={this.state.currentDisplay}>
+            {/* Charts */}
+            <div className="sideMenu__chart">
+              <Charts data={data[currentDisplay]} max={data.groupMax} />
+            </div>
+          </SideMenu>
+          <FilterBar filterfn={this.filterIncidents} />
+        </div>
+    </div>
+  );
+}
 
 class HomePage extends Component {
   constructor(props) {
@@ -113,9 +166,7 @@ class HomePage extends Component {
     return false;
   }
 
-  getZoom = () => {
-    return this.state.zoom;
-  }
+  getZoom = () => { return this.state.zoom; }
 
   render() {
     const { isFetching, currentDisplay } = this.state;
