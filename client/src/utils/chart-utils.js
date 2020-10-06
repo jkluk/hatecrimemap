@@ -1,3 +1,5 @@
+import { filterSum } from './data-utils';
+
 export const CHARTS = {
   RACE_ETHNICITY: 1,
   RELIGION: 2,
@@ -105,15 +107,16 @@ export function getChartData(chart, allData) {
 
 const mapData = (data, sort=false) => {
   // [[label, {count: 0}], [label, {count: 1}]]
-  data = Object.entries(data).filter(([key, obj]) => obj && (obj.count || obj.count===0))
+  data = CHART_STRINGS.map(re => filterSum(data, re))
+  // data = Object.entries(data).filter(([key, obj]) => obj && (obj.count || obj.count===0))
   if (sort) {
     data.sort((a, b) => {
       return (a[1].count < b[1].count) ? -1 : ((a[1].count==b[1].count) ? 0 : 1)
     })
   }
   return ({
-            labels: data.map(([label, x]) => label),
-            counts: data.map(([parent, counts]) => counts.count)
+            labels: CHART_STRINGS,
+            counts: data
           })
 };
 

@@ -6,7 +6,7 @@ import { CircularProgress, Button, IconButton } from '@material-ui/core';
 import { FirstTimeOverlay, MapWrapper, SideMenu, Charts, FilterBar, MapBar } from '../../components';
 import { counties } from '../../res/counties/statecounties.js';
 import { GeoJSON } from 'react-leaflet';
-import { getAllData, eachStatesCounties, storeStateData, resetStateColor } from '../../utils/data-utils';
+import { getAllData, getAllFragments, getStateCounts, getCountyCounts, eachStatesCounties, storeStateData, resetStateColor } from '../../utils/data-utils';
 
 import './HomePage.css';
 
@@ -29,7 +29,7 @@ class HomePage extends Component {
     super(props);
     this.state = {
       region: MAP_DISPLAY.USA,
-      zoom: 4,
+      zoom: 4.5,
       isFetching: true,
       currentDisplay: 'none',
       currentFilter: 'published',
@@ -42,12 +42,10 @@ class HomePage extends Component {
   }
 
   async componentDidMount() {
-    getAllData().then(values => {
+    getAllFragments().then(values => {
+      console.log(values)
       this.setState({
-        data: { states: storeStateData(values[0].result, values[2]),
-                publishedStates: storeStateData(values[1].result, values[2])
-                // we shouldn't add more api endpoints for filters, it should be dynamic within the front-end
-              },
+        data: values,
         isFetching: false
       });
       
@@ -61,7 +59,7 @@ class HomePage extends Component {
     Object.values(this.statesRef.current.contextValue.layerContainer._layers).forEach(layer => {
       if(layer.feature) {  // only the states/counties have a feature
         // console.log(layer.feature);
-        resetStateColor(layer, this.state.data.states);
+        resetStateColor(layer, this.state.data);
       }
     })
   }
@@ -113,28 +111,41 @@ class HomePage extends Component {
     return false;
   }
 
+  updateZoom = (v) => {
+    if (this.state.zoom < 6 && v >= 6 || this.state.zoom >= 6 && v < 6) {
+      this.setState({zoom: v, currentDisplay: 'none', locked: false})
+    } else {
+      this.setState({zoom: v})
+    }
+  }
+
   getZoom = () => {
     return this.state.zoom;
   }
 
   render() {
-    const { isFetching, currentDisplay } = this.state;
+    const { isFetching, currentDisplay, data } = this.state;
     const { classes } = this.props;
 
 
     if(isFetching) {
       return <CircularProgress className={classes.progress} />;
+    } 
+
+    let chartData;
+    if (this.state.zoom >= 6) {
+      chartData = getCountyCounts(data, currentDisplay, this.state.currentFilter);
+    } else {
+      chartData = getStateCounts(data, currentDisplay, this.state.currentFilter);
     }
 
-    const data = this.state.currentFilter=='all' ? this.state.data.states : this.state.data.publishedStates
-    
     return (
       <div className="homePage">
           <FirstTimeOverlay />
           {/* TODO: context for mapdata and data.states? */}
           <MapWrapper region={this.state.region} updateState={this.updateState}
           statesRef={this.statesRef} mapRef={this.mapRef} alaskaRef={this.alaskaRef} hawaiiRef={this.hawaiiRef}
-          data={data} updateView={this.changeViewRegion}>
+          data={data} updateView={this.changeViewRegion} zoom={this.getZoom()} updateZoom={this.updateZoom}>
             <MapBar changeRegion={this.changeViewRegion} region={this.state.region}/>
           </MapWrapper>
 
@@ -142,7 +153,7 @@ class HomePage extends Component {
             <SideMenu header={this.state.currentDisplay}>
               {/* Charts */}
               <div className="sideMenu__chart">
-                <Charts data={data[currentDisplay]} max={data.groupMax} />
+                <Charts data={chartData} />
               </div>
             </SideMenu>
             <FilterBar filterfn={this.filterIncidents} />

@@ -13,11 +13,10 @@ const ChartText = (props) => {
   }
 
   console.log(props.data)
-  const counts = Object.entries(props.data).filter(([key, x]) => x && x.count)
 
   return (
     <div>
-     	{counts.map(([key, obj]) => <p key={key}>{key}: {obj.count}</p>)}
+     	{props.data.labels.map((e, ind) => <p key={e}>{e}: {props.data.datasets[0].data[ind]}</p>)}
     </div>
   )
 };

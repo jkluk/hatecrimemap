@@ -47,6 +47,7 @@ class Charts extends React.Component {
   }
 
   barClick = (elems) => {
+    return;
     // index into `data` of the bar clicked
     if (!elems[0]) {
       return
@@ -90,11 +91,13 @@ class Charts extends React.Component {
         )
       }
 
+      const chartData = getChartData(CHARTS.TOP, this.props.data)
+
       return (
         <div className="charts">
-          <Bar data={getChartData(CHARTS.TOP, this.props.data)} options={this.state.options}
+          <Bar data={chartData} options={this.state.options}
                onElementsClick={this.barClick} />
-          <ChartsText data={this.props.data} />
+          <ChartsText data={chartData} />
         </div>
       )
     }

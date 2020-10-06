@@ -223,15 +223,52 @@ const statePublishedOnly = `SELECT us_states.name, g2.name as parent, g1.name as
 								JOIN groups g1 ON g1.id = t.group_id
 								join groups g2 on g2.id = t.parent
 							`
+const filters = ['published'];
+const countyFragmented = `SELECT s.name as county, s.state_name as state, g2.name as parent, g1.name as group, ${filters.join(',')}, t.count
+							FROM (SELECT county_id, i.primary_group_id as parent, group_id, ${filters.join(',')}, COUNT(county_id)
+									FROM incident i
+									JOIN incident_groups ON i.id = incident_id
+									GROUP BY county_id, i.primary_group_id, group_id, ${filters.join(',')}
+									ORDER BY county_id
+							) t JOIN us_counties s ON s.id = t.county_id
+								JOIN groups g1 ON g1.id = t.group_id
+								join groups g2 on g2.id = t.parent`;
+const allDataQuery = `SELECT
+						s.name as state,
+						coalesce(
+							(
+								SELECT array_to_json(array_agg(row_to_json(x)))
+								FROM(
+									SELECT s.name as county, g2.name as parent, g1.name as group, ${filters.join(',')}, t.count
+									FROM (SELECT county_id, i.primary_group_id as parent, group_id, ${filters.join(',')}, COUNT(county_id)
+											FROM incident i
+											JOIN incident_groups ON i.id = incident_id
+											WHERE state_id=s.id
+											GROUP BY county_id, i.primary_group_id, group_id, ${filters.join(',')}
+											ORDER BY county_id
+									) t JOIN us_counties s ON s.id = t.county_id
+										JOIN groups g1 ON g1.id = t.group_id
+										join groups g2 on g2.id = t.parent
+								) x
+							),
+							'[]'
+						) AS counties
+					FROM us_states s`
 
 router.get('/', (req, res) => {
 	db.any(stateAllCategories)
 	.then((result) => {
-		res.status(200)
-		.json({
-			status: 'success',
-			result
-		});
+		res.send(result);
+	})
+	.catch(err => console.log('ERROR: ', err));
+});
+
+router.get('/all', (req, res) => {
+	console.log('all')
+	db.any(allDataQuery)
+	.then((result) => {
+		console.log(result)
+		res.send(result);
 	})
 	.catch(err => console.log('ERROR: ', err));
 });
